@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>타자연습</title>
+<style>
+  :root{
+    --ink:#1b1f23;
+    --paper:#f7f4ee;
+    --panel:#ffffff;
+    --accent:#3a5a40;
+    --accent-2:#c8a24a;
+    --correct:#3a5a40;
+    --wrong:#b3432b;
+    --muted:#8b8578;
+    --line:#ddd6c7;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    min-height:100vh;
+    background:var(--paper);
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px);
+    background-size: 100% 2.2em;
+    font-family:"Noto Sans KR","Malgun Gothic",sans-serif;
+    color:var(--ink);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+  }
+  .card{
+    width:100%;
+    max-width:760px;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:4px;
+    box-shadow:0 12px 30px rgba(30,25,15,0.08);
+    padding:40px;
+    position:relative;
+  }
+  .eyebrow{
+    font-size:12px;
+    letter-spacing:0.3em;
+    text-transform:uppercase;
+    color:var(--accent-2);
+    font-weight:700;
+    margin-bottom:6px;
+  }
+  h1{
+    font-size:28px;
+    margin:0 0 28px 0;
+    font-weight:800;
+    letter-spacing:-0.02em;
+  }
+
+  /* 닉네임 입력 화면 */
+  #nameScreen{
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+  }
+  #nameScreen p{
+    color:var(--muted);
+    margin:0 0 8px 0;
+    font-size:14px;
+  }
+  input[type="text"]{
+    font-size:18px;
+    padding:14px 16px;
+    border:1.5px solid var(--line);
+    border-radius:3px;
+    background:var(--paper);
+    color:var(--ink);
+    outline:none;
+    font-family:inherit;
+  }
+  input[type="text"]:focus{
+    border-color:var(--accent);
+  }
+  button{
+    font-family:inherit;
+    font-size:16px;
+    font-weight:700;
+    padding:14px 20px;
+    border:none;
+    border-radius:3px;
+    background:var(--accent);
+    color:#fff;
+    cursor:pointer;
+    letter-spacing:0.02em;
+  }
+  button:hover{ filter:brightness(1.08); }
+  button:disabled{ opacity:0.5; cursor:not-allowed; }
+
+  /* 로딩 */
+  #loadStatus{
+    font-size:13px;
+    color:var(--muted);
+  }
+
+  /* 타자 화면 */
+  #typeScreen{ display:none; }
+
+  .stat-bar{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    margin-bottom:18px;
+    font-size:13px;
+    color:var(--muted);
+  }
+  .stat-bar .who{
+    font-weight:700;
+    color:var(--accent);
+  }
+  #timer{
+    font-variant-numeric: tabular-nums;
+    font-weight:700;
+    color:var(--ink);
+  }
+
+  .source-box{
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-left:4px solid var(--accent-2);
+    border-radius:2px;
+    padding:22px 20px;
+    font-size:21px;
+    line-height:1.9;
+    letter-spacing:0.01em;
+    margin-bottom:18px;
+    word-break:keep-all;
+    overflow-wrap:break-word;
+    white-space:pre-wrap;
+  }
+  .source-box .ch{
+    position:relative;
+  }
+  .ch.correct{ color:var(--correct); }
+  .ch.wrong{ color:var(--wrong); background:rgba(179,67,43,0.12); border-radius:2px; }
+  .ch.current{
+    border-bottom:3px solid var(--accent-2);
+  }
+
+  .input-box{
+    width:100%;
+    font-size:21px;
+    line-height:1.9;
+    padding:16px 18px;
+    border:1.5px solid var(--line);
+    border-radius:2px;
+    background:#fff;
+    color:var(--ink);
+    font-family:inherit;
+    outline:none;
+    resize:none;
+  }
+  .input-box:focus{ border-color:var(--accent); }
+
+  /* 결과 화면 */
+  #resultScreen{ display:none; }
+  .result-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+    margin:24px 0;
+  }
+  .result-tile{
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:3px;
+    padding:18px;
+  }
+  .result-tile .label{
+    font-size:12px;
+    color:var(--muted);
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    margin-bottom:6px;
+  }
+  .result-tile .value{
+    font-size:26px;
+    font-weight:800;
+    color:var(--ink);
+  }
+  .result-tile .value.accent{ color:var(--accent); }
+
+  .seed{
+    margin-top:8px;
+    font-size:11px;
+    color:var(--muted);
+    letter-spacing:0.06em;
+    text-align:right;
+    user-select:all;
+  }
+
+  .retry-btn{
+    margin-top:8px;
+    background:var(--ink);
+  }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="eyebrow">TYPING PRACTICE</div>
+  <h1>타자연습</h1>
+
+  <!-- 닉네임 입력 화면 -->
+  <div id="nameScreen">
+    <p>연습을 시작하기 전에 닉네임을 입력해 주세요.</p>
+    <input type="text" id="nickInput" placeholder="닉네임" maxlength="20" autocomplete="off">
+    <button id="startBtn">시작하기</button>
+    <div id="loadStatus"></div>
+  </div>
+
+  <!-- 타자 연습 화면 -->
+  <div id="typeScreen">
+    <div class="stat-bar">
+      <div><span class="who" id="nickDisplay"></span> 님, 화이팅!</div>
+      <div>경과 시간 <span id="timer">0.0</span>초</div>
+    </div>
+    <div class="source-box" id="sourceBox"></div>
+    <textarea class="input-box" id="typeInput" rows="3" placeholder="여기에 입력을 시작하면 타이머가 작동합니다" autocomplete="off" spellcheck="false"></textarea>
+  </div>
+
+  <!-- 결과 화면 -->
+  <div id="resultScreen">
+    <p style="color:var(--muted); font-size:14px; margin-bottom:0;">수고하셨습니다, <b id="resultNick" style="color:var(--accent);"></b> 님!</p>
+    <div class="result-grid">
+      <div class="result-tile">
+        <div class="label">정확도</div>
+        <div class="value accent" id="resultAccuracy">-</div>
+      </div>
+      <div class="result-tile">
+        <div class="label">타자 속도</div>
+        <div class="value accent" id="resultSpeed">-</div>
+      </div>
+      <div class="result-tile">
+        <div class="label">걸린 시간</div>
+        <div class="value" id="resultTime">-</div>
+      </div>
+      <div class="result-tile">
+        <div class="label">닉네임</div>
+        <div class="value" id="resultNick2">-</div>
+      </div>
+    </div>
+    <div class="seed" id="seedDisplay"></div>
+    <button class="retry-btn" id="retryBtn">다시 하기</button>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  const SHEET_ID = "1gNjbTde-oDFcTlWLkeB2O7a9v-s_ql92QT45733jtWQ";
+
+  // JSONP 방식으로 gviz API 호출 (CORS 제약 회피)
+  function fetchViaJsonp(range){
+    return new Promise((resolve, reject) => {
+      const callbackName = "__gvizCallback_" + Date.now() + "_" + Math.floor(Math.random()*100000);
+      const script = document.createElement('script');
+
+      const cleanup = () => {
+        delete window[callbackName];
+        if(script.parentNode) script.parentNode.removeChild(script);
+        clearTimeout(timeoutId);
+      };
+
+      const timeoutId = setTimeout(() => {
+        cleanup();
+        reject(new Error("응답 시간 초과"));
+      }, 10000);
+
+      window[callbackName] = (json) => {
+        cleanup();
+        resolve(json);
+      };
+
+      script.onerror = () => {
+        cleanup();
+        reject(new Error("스크립트 로드 실패 (시트가 비공개이거나 존재하지 않을 수 있음)"));
+      };
+
+      const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq`
+        + `?tqx=out:json;responseHandler:${callbackName}`
+        + (range ? `&range=${encodeURIComponent(range)}` : "");
+
+      script.src = url;
+      document.head.appendChild(script);
+    });
+  }
+
+  const nameScreen = document.getElementById('nameScreen');
+  const typeScreen = document.getElementById('typeScreen');
+  const resultScreen = document.getElementById('resultScreen');
+  const nickInput = document.getElementById('nickInput');
+  const startBtn = document.getElementById('startBtn');
+  const loadStatus = document.getElementById('loadStatus');
+  const nickDisplay = document.getElementById('nickDisplay');
+  const timerEl = document.getElementById('timer');
+  const sourceBox = document.getElementById('sourceBox');
+  const typeInput = document.getElementById('typeInput');
+  const resultNick = document.getElementById('resultNick');
+  const resultNick2 = document.getElementById('resultNick2');
+  const resultAccuracy = document.getElementById('resultAccuracy');
+  const resultSpeed = document.getElementById('resultSpeed');
+  const resultTime = document.getElementById('resultTime');
+  const seedDisplay = document.getElementById('seedDisplay');
+  const retryBtn = document.getElementById('retryBtn');
+
+  let sourceText = "";
+  let nickname = "";
+  let startTime = null;
+  let timerInterval = null;
+  let finished = false;
+
+  async function loadSheetText(){
+    loadStatus.textContent = "문장을 불러오는 중...";
+    try{
+      const json = await fetchViaJsonp("A1");
+
+      if(json.status === "error"){
+        const msg = (json.errors && json.errors[0] && json.errors[0].detailed_message) || "알 수 없는 오류";
+        throw new Error(msg);
+      }
+
+      const rows = json.table && json.table.rows;
+      if(!rows || !rows.length || !rows[0].c || !rows[0].c[0] || rows[0].c[0].v == null){
+        throw new Error("A1 셀이 비어 있습니다.");
+      }
+
+      const cell = String(rows[0].c[0].v).trim();
+      if(!cell){
+        throw new Error("A1 셀이 비어 있습니다.");
+      }
+
+      sourceText = cell;
+      loadStatus.textContent = "문장을 불러왔습니다. (" + sourceText.length + "자)";
+      startBtn.disabled = false;
+    }catch(e){
+      loadStatus.innerHTML =
+        "문장을 불러오지 못했습니다.<br>" +
+        "확인 사항: 1) 공유 설정이 '링크가 있는 모든 사용자 - 뷰어'인지, " +
+        "2) 스프레드시트가 삭제/이동되지 않았는지, 3) A1 셀에 내용이 있는지 확인해 주세요.<br>" +
+        "<span style='font-size:11px;'>세부 오류: " + e.message + "</span>";
+      startBtn.disabled = true;
+    }
+  }
+
+  startBtn.disabled = true;
+  loadSheetText();
+
+  startBtn.addEventListener('click', () => {
+    const nick = nickInput.value.trim();
+    if(!nick){
+      nickInput.focus();
+      return;
+    }
+    if(!sourceText){
+      return;
+    }
+    nickname = nick;
+    nickDisplay.textContent = nickname;
+    nameScreen.style.display = 'none';
+    typeScreen.style.display = 'block';
+    renderSource("");
+    typeInput.value = "";
+    typeInput.disabled = false;
+    setTimeout(() => typeInput.focus(), 50);
+  });
+
+  function renderSource(typed){
+    let html = "";
+    for(let idx = 0; idx < sourceText.length; idx++){
+      const ch = sourceText[idx];
+      const display = ch === ' ' ? ' ' : escapeHtml(ch);
+      let cls = "ch";
+      if(idx < typed.length){
+        cls += typed[idx] === ch ? " correct" : " wrong";
+      } else if(idx === typed.length){
+        cls += " current";
+      }
+      html += `<span class="${cls}">${display}</span>`;
+    }
+    sourceBox.innerHTML = html;
+  }
+
+  function escapeHtml(s){
+    return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  }
+
+  function startTimerIfNeeded(){
+    if(startTime === null){
+      startTime = performance.now();
+      timerInterval = setInterval(() => {
+        const elapsed = (performance.now() - startTime) / 1000;
+        timerEl.textContent = elapsed.toFixed(1);
+      }, 100);
+    }
+  }
+
+  // 붙여넣기로 순식간에 입력하는 것을 방지
+  typeInput.addEventListener('keydown', (e) => {
+    const key = e.key.toLowerCase();
+    const isPasteShortcut =
+      ((e.ctrlKey || e.metaKey) && key === 'v') ||
+      (e.shiftKey && key === 'insert');
+    if(isPasteShortcut){
+      e.preventDefault();
+    }
+  });
+
+  typeInput.addEventListener('paste', (e) => {
+    e.preventDefault();
+  });
+  typeInput.addEventListener('drop', (e) => {
+    e.preventDefault();
+  });
+  typeInput.addEventListener('contextmenu', (e) => {
+    // 우클릭 메뉴를 통한 붙여넣기도 차단
+    e.preventDefault();
+  });
+
+  typeInput.addEventListener('input', () => {
+    if(finished) return;
+    const typed = typeInput.value;
+    startTimerIfNeeded();
+    renderSource(typed);
+
+    if(typed.length >= sourceText.length){
+      // 정답 길이에 도달하면 완료 처리 (초과 입력은 자름)
+      const finalTyped = typed.slice(0, sourceText.length);
+      typeInput.value = finalTyped;
+      finishTyping(finalTyped);
+    }
+  });
+
+  function finishTyping(typed){
+    finished = true;
+    clearInterval(timerInterval);
+    typeInput.disabled = true;
+    const elapsedSec = (performance.now() - startTime) / 1000;
+
+    let correctCount = 0;
+    for(let i = 0; i < sourceText.length; i++){
+      if(typed[i] === sourceText[i]) correctCount++;
+    }
+    const accuracy = (correctCount / sourceText.length) * 100;
+    const minutes = elapsedSec / 60;
+    // 타수: 완성된 글자 수 기준 CPM (분당 타수)
+    const cpm = minutes > 0 ? Math.round(sourceText.length / minutes) : sourceText.length;
+
+    const now = new Date();
+    const seed = buildSeed(nickname, accuracy, cpm, now);
+
+    resultNick.textContent = nickname;
+    resultNick2.textContent = nickname;
+    resultAccuracy.textContent = accuracy.toFixed(1) + "%";
+    resultSpeed.textContent = cpm + " 타/분";
+    resultTime.textContent = elapsedSec.toFixed(2) + "초";
+    seedDisplay.textContent = "SEED " + seed;
+
+    typeScreen.style.display = 'none';
+    resultScreen.style.display = 'block';
+  }
+
+  // 닉네임, 정확도, 속도, 현재시간을 버무린 의사난수(해시) 생성
+  function buildSeed(nick, accuracy, speed, date){
+    const raw = [
+      nick,
+      accuracy.toFixed(2),
+      speed.toString(),
+      date.getTime().toString()
+    ].join("|");
+
+    // 간단한 해시 (djb2 변형) -> 36진수로 표현해 짧게
+    let hash = 5381;
+    for(let i = 0; i < raw.length; i++){
+      hash = ((hash << 5) + hash + raw.charCodeAt(i)) >>> 0;
+    }
+    // 두 번째 라운드로 조금 더 섞기
+    let hash2 = 52711;
+    for(let i = raw.length - 1; i >= 0; i--){
+      hash2 = ((hash2 << 5) - hash2 + raw.charCodeAt(i)) >>> 0;
+    }
+    const combined = (hash ^ (hash2 << 1)) >>> 0;
+    return combined.toString(36).toUpperCase();
+  }
+
+  retryBtn.addEventListener('click', () => {
+    finished = false;
+    startTime = null;
+    timerEl.textContent = "0.0";
+    typeInput.value = "";
+    typeInput.disabled = false;
+    resultScreen.style.display = 'none';
+    typeScreen.style.display = 'block';
+    renderSource("");
+    setTimeout(() => typeInput.focus(), 50);
+  });
+
+})();
+</script>
+
+</body>
+</html>

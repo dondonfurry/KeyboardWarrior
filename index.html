@@ -30,6 +30,10 @@
     align-items:center;
     justify-content:center;
     padding:24px;
+    user-select:none;
+    -webkit-user-select:none;
+    -moz-user-select:none;
+    -ms-user-select:none;
   }
   .card{
     width:100%;
@@ -122,43 +126,141 @@
     color:var(--ink);
   }
 
-  .source-box{
-    background:var(--paper);
-    border:1px solid var(--line);
-    border-left:4px solid var(--accent-2);
-    border-radius:2px;
-    padding:22px 20px;
-    font-size:21px;
-    line-height:1.9;
-    letter-spacing:0.01em;
+  .line-viewport{
+    position:relative;
+    height:220px;
+    overflow:hidden;
     margin-bottom:18px;
+    mask-image: linear-gradient(to bottom, transparent 0%, black 18%, black 82%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 18%, black 82%, transparent 100%);
+  }
+  .line-track{
+    position:absolute;
+    left:0;
+    right:0;
+    top:0;
+    transition: transform 0.5s cubic-bezier(0.22, 0.61, 0.36, 1);
+    will-change: transform;
+  }
+  .line-block{
+    padding:8px 4px 20px 4px;
+    text-align:left;
+    transition: opacity 0.45s ease;
+  }
+  .line-block .line-original{
+    font-size:22px;
+    line-height:1.6;
+    letter-spacing:0.01em;
+    color:var(--ink);
     word-break:keep-all;
-    overflow-wrap:break-word;
     white-space:pre-wrap;
   }
-  .source-box .ch{
-    position:relative;
+  .line-block .line-typed{
+    font-size:22px;
+    line-height:1.6;
+    letter-spacing:0.01em;
+    color:var(--muted);
+    word-break:keep-all;
+    white-space:pre-wrap;
+    min-height:1.6em;
   }
+  .line-block.done{ opacity:0.32; }
+  .line-block.upcoming{ opacity:0.28; }
+  .line-block.upcoming .line-typed{ visibility:hidden; }
+  .line-block.current .line-original{ color:var(--ink); font-weight:700; }
+
+  .ch{ position:relative; }
   .ch.correct{ color:var(--correct); }
   .ch.wrong{ color:var(--wrong); background:rgba(179,67,43,0.12); border-radius:2px; }
-  .ch.current{
-    border-bottom:3px solid var(--accent-2);
-  }
+  .ch.current{ border-bottom:3px solid var(--accent-2); }
 
-  .input-box{
+  input.input-box{
     width:100%;
-    font-size:21px;
-    line-height:1.9;
-    padding:16px 18px;
-    border:1.5px solid var(--line);
-    border-radius:2px;
-    background:#fff;
+    font-size:22px;
+    line-height:1.6;
+    letter-spacing:0.01em;
+    padding:14px 4px;
+    border:none;
+    border-bottom:2.5px solid var(--line);
+    border-radius:0;
+    background:transparent;
     color:var(--ink);
     font-family:inherit;
     outline:none;
-    resize:none;
+    transition:border-color 0.2s ease;
   }
-  .input-box:focus{ border-color:var(--accent); }
+  input.input-box:focus{ border-color:var(--accent); }
+
+  /* 실시간 통계 그래프 */
+  .stats-panel{
+    margin-top:26px;
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+  }
+  .stat-row{
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+  .stat-label{
+    width:40px;
+    flex-shrink:0;
+    font-size:12px;
+    color:var(--muted);
+    letter-spacing:0.05em;
+  }
+  .stat-bar-track{
+    flex:1;
+    height:9px;
+    border-radius:99px;
+    background:rgba(0,0,0,0.05);
+    border:1px solid var(--line);
+    overflow:hidden;
+    position:relative;
+  }
+  .stat-bar-fill{
+    height:100%;
+    width:0%;
+    border-radius:99px;
+    background:#b9cdb4;
+    transition: width 0.35s cubic-bezier(0.22,0.61,0.36,1), background 0.4s ease;
+  }
+  .stat-value{
+    width:76px;
+    flex-shrink:0;
+    text-align:right;
+    font-size:12px;
+    font-variant-numeric: tabular-nums;
+    color:var(--muted);
+    font-weight:700;
+  }
+
+  /* 정확도 100% 달성 시 은은하게 빛나는 효과 */
+  .stat-bar-fill.accuracy.glow{
+    background:linear-gradient(90deg, #d8c98a, #f0e4b8, #d8c98a);
+    background-size:200% 100%;
+    animation: shimmerGlow 1.6s ease-in-out infinite;
+    box-shadow:0 0 10px rgba(216,201,138,0.65);
+  }
+  @keyframes shimmerGlow{
+    0%{ background-position:0% 50%; }
+    50%{ background-position:100% 50%; }
+    100%{ background-position:0% 50%; }
+  }
+
+  /* 타수 구간별 색상 */
+  .stat-bar-fill.speed.s0{ background:#b9cdb4; }        /* ~400 미만 */
+  .stat-bar-fill.speed.s1{ background:#a9c6dd; }        /* 400~499 */
+  .stat-bar-fill.speed.s2{ background:#c3aee0; }        /* 500~599 */
+  .stat-bar-fill.speed.s3{ background:#e3aecb; }        /* 600~699 */
+  .stat-bar-fill.speed.s4{ background:#e7bd9a; }        /* 700~799 */
+  .stat-bar-fill.speed.s5{
+    background:linear-gradient(90deg, #ecd48e, #fbeeb8, #ecd48e);
+    background-size:200% 100%;
+    animation: shimmerGlow 1.4s ease-in-out infinite;
+    box-shadow:0 0 10px rgba(236,212,142,0.6);
+  }                                                      /* 800 이상 */
 
   /* 결과 화면 */
   #resultScreen{ display:none; }
@@ -188,17 +290,41 @@
   }
   .result-tile .value.accent{ color:var(--accent); }
 
-  .seed{
-    margin-top:8px;
+  .allow-select{
+    user-select:text !important;
+    -webkit-user-select:text !important;
+  }
+
+  .code-box{
+    margin-top:20px;
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:3px;
+    padding:14px 16px;
+  }
+  .code-label{
     font-size:11px;
     color:var(--muted);
-    letter-spacing:0.06em;
-    text-align:right;
-    user-select:all;
+    letter-spacing:0.05em;
+    margin-bottom:8px;
+  }
+  .code-hint{ font-weight:400; }
+  .code-value{
+    font-size:12px;
+    line-height:1.6;
+    color:var(--ink);
+    word-break:break-all;
+    letter-spacing:0.02em;
+    font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  }
+  .code-note{
+    margin-top:10px;
+    font-size:11px;
+    color:var(--muted);
   }
 
   .retry-btn{
-    margin-top:8px;
+    margin-top:14px;
     background:var(--ink);
   }
 </style>
@@ -223,8 +349,23 @@
       <div><span class="who" id="nickDisplay"></span> 님, 화이팅!</div>
       <div>경과 시간 <span id="timer">0.0</span>초</div>
     </div>
-    <div class="source-box" id="sourceBox"></div>
-    <textarea class="input-box" id="typeInput" rows="3" placeholder="여기에 입력을 시작하면 타이머가 작동합니다" autocomplete="off" spellcheck="false"></textarea>
+    <div class="line-viewport" id="lineViewport">
+      <div class="line-track" id="lineTrack"></div>
+    </div>
+    <input type="text" class="input-box" id="typeInput" placeholder="여기에 입력을 시작하면 타이머가 작동합니다" autocomplete="off" autocapitalize="off" spellcheck="false">
+
+    <div class="stats-panel">
+      <div class="stat-row">
+        <div class="stat-label">정확도</div>
+        <div class="stat-bar-track"><div class="stat-bar-fill accuracy" id="accuracyFill"></div></div>
+        <div class="stat-value" id="accuracyValue">100%</div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-label">타수</div>
+        <div class="stat-bar-track"><div class="stat-bar-fill speed s0" id="speedFill"></div></div>
+        <div class="stat-value" id="speedValue">0 타/분</div>
+      </div>
+    </div>
   </div>
 
   <!-- 결과 화면 -->
@@ -248,7 +389,13 @@
         <div class="value" id="resultNick2">-</div>
       </div>
     </div>
-    <div class="seed" id="seedDisplay"></div>
+
+    <div class="code-box">
+      <div class="code-label">인증 코드 <span class="code-hint">(결과가 확정되는 순간 함께 고정됩니다)</span></div>
+      <div class="code-value allow-select" id="seedDisplay"></div>
+      <div class="code-note">이 코드는 check.html에서 해독할 수 있습니다.</div>
+    </div>
+
     <button class="retry-btn" id="retryBtn">다시 하기</button>
   </div>
 
@@ -302,7 +449,8 @@
   const loadStatus = document.getElementById('loadStatus');
   const nickDisplay = document.getElementById('nickDisplay');
   const timerEl = document.getElementById('timer');
-  const sourceBox = document.getElementById('sourceBox');
+  const lineViewport = document.getElementById('lineViewport');
+  const lineTrack = document.getElementById('lineTrack');
   const typeInput = document.getElementById('typeInput');
   const resultNick = document.getElementById('resultNick');
   const resultNick2 = document.getElementById('resultNick2');
@@ -311,12 +459,42 @@
   const resultTime = document.getElementById('resultTime');
   const seedDisplay = document.getElementById('seedDisplay');
   const retryBtn = document.getElementById('retryBtn');
+  const accuracyFill = document.getElementById('accuracyFill');
+  const accuracyValue = document.getElementById('accuracyValue');
+  const speedFill = document.getElementById('speedFill');
+  const speedValue = document.getElementById('speedValue');
 
   let sourceText = "";
   let nickname = "";
   let startTime = null;
   let timerInterval = null;
   let finished = false;
+
+  let lines = [];
+  let currentLineIndex = 0;
+  let typedForLine = [];
+  let totalCorrectJamo = 0;
+  let totalRequiredJamo = 0;
+
+  // 한 글자(음절/자모/일반 문자)를 입력하는 데 필요한 타수(자소 수)를 계산
+  // 예: "한" -> ㅎ,ㅏ,ㄴ = 3타, "가" -> ㄱ,ㅏ = 2타, 영문/숫자/공백/기호 = 1타
+  function countJamo(ch){
+    const code = ch.charCodeAt(0);
+    // 완성형 한글 음절 (가~힣)
+    if(code >= 0xAC00 && code <= 0xD7A3){
+      const offset = code - 0xAC00;
+      const jong = offset % 28;
+      return jong === 0 ? 2 : 3; // 종성 없으면 초성+중성 2타, 있으면 3타
+    }
+    // 낱개 자모(ㄱ~ㅎ, ㅏ~ㅣ)나 그 외 문자(영문/숫자/공백/기호)는 1타로 계산
+    return 1;
+  }
+
+  function countLineJamo(line){
+    let total = 0;
+    for(const ch of line) total += countJamo(ch);
+    return total;
+  }
 
   async function loadSheetText(){
     loadStatus.textContent = "문장을 불러오는 중...";
@@ -367,30 +545,159 @@
     nickDisplay.textContent = nickname;
     nameScreen.style.display = 'none';
     typeScreen.style.display = 'block';
-    renderSource("");
+
+    lines = buildLines(sourceText);
+    currentLineIndex = 0;
+    typedForLine = new Array(lines.length).fill("");
+    totalCorrectJamo = 0;
+    totalRequiredJamo = lines.reduce((sum, l) => sum + countLineJamo(l), 0);
+
     typeInput.value = "";
     typeInput.disabled = false;
+    renderTrack();
+    resetLiveStatsDisplay();
     setTimeout(() => typeInput.focus(), 50);
   });
 
-  function renderSource(typed){
-    let html = "";
-    for(let idx = 0; idx < sourceText.length; idx++){
-      const ch = sourceText[idx];
-      const display = ch === ' ' ? ' ' : escapeHtml(ch);
-      let cls = "ch";
-      if(idx < typed.length){
-        cls += typed[idx] === ch ? " correct" : " wrong";
-      } else if(idx === typed.length){
-        cls += " current";
+  // 현재 박스 너비에 맞춰 단어(어절) 단위로 자연스럽게 줄바꿈, 공백 없는 긴 단어는 글자 단위로 강제 개행
+  function buildLines(text){
+    const availableWidth = lineViewport.clientWidth - 8; // line-block 좌우 패딩 보정
+    const measurer = document.createElement('span');
+    measurer.style.position = 'absolute';
+    measurer.style.visibility = 'hidden';
+    measurer.style.whiteSpace = 'nowrap';
+    measurer.style.fontSize = '22px';
+    measurer.style.letterSpacing = '0.01em';
+    measurer.style.fontFamily = getComputedStyle(document.body).fontFamily;
+    document.body.appendChild(measurer);
+
+    const fitsWidth = (s) => {
+      measurer.textContent = s;
+      return measurer.scrollWidth <= availableWidth;
+    };
+
+    // 공백이 없어서(또는 있어도) 한 줄에 안 들어가는 긴 단어를 글자 단위로 쪼갬
+    const splitLongWord = (word) => {
+      const pieces = [];
+      let current = "";
+      for(const ch of word){
+        const test = current + ch;
+        if(!fitsWidth(test) && current){
+          pieces.push(current);
+          current = ch;
+        } else {
+          current = test;
+        }
       }
-      html += `<span class="${cls}">${display}</span>`;
-    }
-    sourceBox.innerHTML = html;
+      if(current) pieces.push(current);
+      return pieces;
+    };
+
+    const paragraphs = text.split('\n');
+    const result = [];
+
+    paragraphs.forEach(paragraph => {
+      const words = paragraph.split(' ').filter(w => w.length > 0);
+      if(words.length === 0){
+        result.push("");
+        return;
+      }
+      let current = "";
+      words.forEach(word => {
+        const test = current ? current + " " + word : word;
+
+        if(fitsWidth(test)){
+          current = test;
+          return;
+        }
+
+        // 현재 줄에 단어를 못 붙임 -> 지금까지 쌓인 줄을 먼저 확정
+        if(current) result.push(current);
+
+        if(fitsWidth(word)){
+          current = word;
+        } else {
+          // 단어 자체가 한 줄보다 긴 경우 글자 단위로 쪼개서 채움
+          const pieces = splitLongWord(word);
+          for(let i = 0; i < pieces.length - 1; i++){
+            result.push(pieces[i]);
+          }
+          current = pieces[pieces.length - 1] || "";
+        }
+      });
+      if(current) result.push(current);
+    });
+
+    document.body.removeChild(measurer);
+    return result.length ? result : [text];
   }
 
   function escapeHtml(s){
     return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  }
+
+  function renderCurrentLineChars(line, typed){
+    let html = "";
+    for(let i = 0; i < line.length; i++){
+      const ch = line[i];
+      let cls = "ch";
+      if(i < typed.length){
+        cls += typed[i] === ch ? " correct" : " wrong";
+      } else if(i === typed.length){
+        cls += " current";
+      }
+      html += `<span class="${cls}">${escapeHtml(ch)}</span>`;
+    }
+    return html;
+  }
+
+  function renderTrack(){
+    let html = "";
+    lines.forEach((line, idx) => {
+      let stateClass = "";
+      let originalHtml;
+      let typedHtml = "";
+
+      if(idx < currentLineIndex){
+        stateClass = "done";
+        originalHtml = escapeHtml(line);
+        typedHtml = escapeHtml(typedForLine[idx] || "");
+      } else if(idx === currentLineIndex){
+        stateClass = "current";
+        const typed = typeInput.value;
+        originalHtml = renderCurrentLineChars(line, typed);
+        typedHtml = escapeHtml(typed);
+      } else {
+        stateClass = "upcoming";
+        originalHtml = escapeHtml(line);
+      }
+
+      html += `<div class="line-block ${stateClass}" data-idx="${idx}">
+        <div class="line-original">${originalHtml}</div>
+        <div class="line-typed">${typedHtml}</div>
+      </div>`;
+    });
+
+    lineTrack.innerHTML = html;
+    scrollToCurrent();
+  }
+
+  function scrollToCurrent(){
+    const currentEl = lineTrack.querySelector(`.line-block[data-idx="${currentLineIndex}"]`);
+    if(!currentEl) return;
+    const peek = 26; // 이전 줄이 위로 살짝 남아 보이도록
+    const offset = Math.max(0, currentEl.offsetTop - peek);
+    lineTrack.style.transform = `translateY(${-offset}px)`;
+  }
+
+  function resetLiveStatsDisplay(){
+    accuracyFill.style.width = "0%";
+    accuracyFill.classList.remove('glow');
+    accuracyValue.textContent = "100%";
+    speedFill.style.width = "0%";
+    speedFill.classList.remove('s1','s2','s3','s4','s5');
+    speedFill.classList.add('s0');
+    speedValue.textContent = "0 타/분";
   }
 
   function startTimerIfNeeded(){
@@ -399,8 +706,52 @@
       timerInterval = setInterval(() => {
         const elapsed = (performance.now() - startTime) / 1000;
         timerEl.textContent = elapsed.toFixed(1);
+        updateLiveStats();
       }, 100);
     }
+  }
+
+  // 완료된 줄 + 현재 입력 중인 줄까지 포함해 실시간 정확도/타수를 계산해 그래프에 반영
+  function updateLiveStats(){
+    let typedJamo = 0;
+    let correctJamo = 0;
+
+    for(let i = 0; i < currentLineIndex; i++){
+      const src = lines[i];
+      const typed = typedForLine[i] || "";
+      for(let j = 0; j < typed.length; j++){
+        typedJamo += countJamo(typed[j]);
+        if(typed[j] === src[j]) correctJamo += countJamo(src[j]);
+      }
+    }
+
+    const src = lines[currentLineIndex] || "";
+    const typed = typeInput.value;
+    for(let j = 0; j < typed.length; j++){
+      typedJamo += countJamo(typed[j]);
+      if(typed[j] === src[j]) correctJamo += countJamo(src[j]);
+    }
+
+    const accuracy = typedJamo > 0 ? (correctJamo / typedJamo) * 100 : 100;
+    const elapsedSec = startTime !== null ? (performance.now() - startTime) / 1000 : 0;
+    const speed = elapsedSec > 0 ? Math.round(typedJamo / (elapsedSec / 60)) : 0;
+
+    accuracyFill.style.width = Math.min(accuracy, 100).toFixed(1) + "%";
+    accuracyValue.textContent = accuracy.toFixed(0) + "%";
+    accuracyFill.classList.toggle('glow', typedJamo > 0 && accuracy >= 99.95);
+
+    const speedPct = Math.min((speed / 900) * 100, 100);
+    speedFill.style.width = speedPct.toFixed(1) + "%";
+    speedValue.textContent = speed + " 타/분";
+
+    let tier = 's0';
+    if(speed >= 800) tier = 's5';
+    else if(speed >= 700) tier = 's4';
+    else if(speed >= 600) tier = 's3';
+    else if(speed >= 500) tier = 's2';
+    else if(speed >= 400) tier = 's1';
+    speedFill.classList.remove('s0','s1','s2','s3','s4','s5');
+    speedFill.classList.add(tier);
   }
 
   // 붙여넣기로 순식간에 입력하는 것을 방지
@@ -425,82 +776,165 @@
     e.preventDefault();
   });
 
-  typeInput.addEventListener('input', () => {
-    if(finished) return;
-    const typed = typeInput.value;
-    startTimerIfNeeded();
-    renderSource(typed);
-
-    if(typed.length >= sourceText.length){
-      // 정답 길이에 도달하면 완료 처리 (초과 입력은 자름)
-      const finalTyped = typed.slice(0, sourceText.length);
-      typeInput.value = finalTyped;
-      finishTyping(finalTyped);
-    }
+  let isComposing = false;
+  typeInput.addEventListener('compositionstart', () => {
+    isComposing = true;
+  });
+  typeInput.addEventListener('compositionend', () => {
+    isComposing = false;
+    // 조합이 끝난 시점에 최신 값 기준으로 완료 여부를 다시 확인
+    handleTypingInput();
   });
 
-  function finishTyping(typed){
+  typeInput.addEventListener('input', (e) => {
+    if(e.isComposing || isComposing) {
+      // 한글 조합 중에는 완료 처리를 하지 않고 화면만 갱신
+      if(!finished) renderTrack();
+      return;
+    }
+    handleTypingInput();
+  });
+
+  function handleTypingInput(){
+    if(finished) return;
+    startTimerIfNeeded();
+
+    const line = lines[currentLineIndex];
+    let typed = typeInput.value;
+
+    if(typed.length >= line.length){
+      // 이번 줄 완료: 정답 길이까지만 반영하고 다음 줄로 이동
+      typed = typed.slice(0, line.length);
+      typeInput.value = typed;
+
+      let correctJamoInLine = 0;
+      for(let i = 0; i < line.length; i++){
+        if(typed[i] === line[i]) correctJamoInLine += countJamo(line[i]);
+      }
+      totalCorrectJamo += correctJamoInLine;
+      typedForLine[currentLineIndex] = typed;
+
+      if(currentLineIndex >= lines.length - 1){
+        finishTyping();
+        return;
+      }
+
+      currentLineIndex++;
+      typeInput.value = "";
+      renderTrack();
+      updateLiveStats();
+    } else {
+      renderTrack();
+      updateLiveStats();
+    }
+  }
+
+  function finishTyping(){
     finished = true;
     clearInterval(timerInterval);
     typeInput.disabled = true;
     const elapsedSec = (performance.now() - startTime) / 1000;
 
-    let correctCount = 0;
-    for(let i = 0; i < sourceText.length; i++){
-      if(typed[i] === sourceText[i]) correctCount++;
-    }
-    const accuracy = (correctCount / sourceText.length) * 100;
+    const accuracy = totalRequiredJamo > 0 ? (totalCorrectJamo / totalRequiredJamo) * 100 : 100;
     const minutes = elapsedSec / 60;
-    // 타수: 완성된 글자 수 기준 CPM (분당 타수)
-    const cpm = minutes > 0 ? Math.round(sourceText.length / minutes) : sourceText.length;
+    const cpm = minutes > 0 ? Math.round(totalRequiredJamo / minutes) : totalRequiredJamo;
 
-    const now = new Date();
-    const seed = buildSeed(nickname, accuracy, cpm, now);
+    const completedAt = new Date(); // 완료 시각(클라이언트 기준; 서버가 없어 클라이언트 시계를 사용)
+    const code = encodeResultCode({
+      nickname: nickname,
+      speed: cpm,
+      accuracy: Number(accuracy.toFixed(2)),
+      elapsedSec: Number(elapsedSec.toFixed(2)),
+      completedAt: completedAt.toISOString()
+    });
 
     resultNick.textContent = nickname;
     resultNick2.textContent = nickname;
     resultAccuracy.textContent = accuracy.toFixed(1) + "%";
     resultSpeed.textContent = cpm + " 타/분";
     resultTime.textContent = elapsedSec.toFixed(2) + "초";
-    seedDisplay.textContent = "SEED " + seed;
+    seedDisplay.textContent = code;
 
     typeScreen.style.display = 'none';
     resultScreen.style.display = 'block';
   }
 
-  // 닉네임, 정확도, 속도, 현재시간을 버무린 의사난수(해시) 생성
-  function buildSeed(nick, accuracy, speed, date){
-    const raw = [
-      nick,
-      accuracy.toFixed(2),
-      speed.toString(),
-      date.getTime().toString()
-    ].join("|");
+  // ---- 인증 코드 (가역적 암호화) ----
+  // 닉네임 / 타수 / 정확도 / 걸린 시간 / 완료 시각을 솔트(42)와 함께 뒤섞어 코드로 만들고,
+  // 나중에 같은 규칙으로 되돌려 원래 값을 복원할 수 있게 함.
+  // 이 코드는 결과가 확정되는 finishTyping() 시점에 딱 한 번만 만들어지므로,
+  // 이후 화면 값(예: F12로 DOM 텍스트만 바꾼 경우)과 코드를 복호화한 값이 달라지면 조작 의심 신호가 됨.
+  const CODE_SALT = 42;
 
-    // 간단한 해시 (djb2 변형) -> 36진수로 표현해 짧게
-    let hash = 5381;
-    for(let i = 0; i < raw.length; i++){
-      hash = ((hash << 5) + hash + raw.charCodeAt(i)) >>> 0;
+  function xorTransform(str, salt){
+    let out = "";
+    for(let i = 0; i < str.length; i++){
+      const shifted = str.charCodeAt(i) ^ (salt + (i % 97) + 7);
+      out += String.fromCharCode(shifted);
     }
-    // 두 번째 라운드로 조금 더 섞기
-    let hash2 = 52711;
-    for(let i = raw.length - 1; i >= 0; i--){
-      hash2 = ((hash2 << 5) - hash2 + raw.charCodeAt(i)) >>> 0;
+    return out;
+  }
+
+  function toBase64Unicode(str){
+    return btoa(unescape(encodeURIComponent(str)));
+  }
+  function fromBase64Unicode(b64){
+    return decodeURIComponent(escape(atob(b64)));
+  }
+
+  function simpleChecksum(str){
+    let sum = 0;
+    for(let i = 0; i < str.length; i++){
+      sum = (sum * 31 + str.charCodeAt(i)) >>> 0;
     }
-    const combined = (hash ^ (hash2 << 1)) >>> 0;
-    return combined.toString(36).toUpperCase();
+    return (sum % 46656).toString(36).toUpperCase().padStart(3, '0'); // 3자리 체크섬
+  }
+
+  function encodeResultCode(data){
+    const payload = JSON.stringify({
+      n: data.nickname,
+      s: data.speed,
+      a: data.accuracy,
+      t: data.elapsedSec,
+      c: data.completedAt,
+      salt: CODE_SALT
+    });
+    const scrambled = xorTransform(payload, CODE_SALT);
+    const b64 = toBase64Unicode(scrambled).split('').reverse().join('');
+    const checksum = simpleChecksum(b64);
+    return `${checksum}-${b64}`;
   }
 
   retryBtn.addEventListener('click', () => {
     finished = false;
     startTime = null;
     timerEl.textContent = "0.0";
+
+    currentLineIndex = 0;
+    typedForLine = new Array(lines.length).fill("");
+    totalCorrectJamo = 0;
+
     typeInput.value = "";
     typeInput.disabled = false;
     resultScreen.style.display = 'none';
     typeScreen.style.display = 'block';
-    renderSource("");
+    renderTrack();
+    resetLiveStatsDisplay();
     setTimeout(() => typeInput.focus(), 50);
+  });
+
+  // 페이지 어디서든 드래그 시작을 막음 (텍스트/이미지 드래그 방지)
+  document.addEventListener('dragstart', (e) => {
+    e.preventDefault();
+  });
+  document.addEventListener('selectstart', (e) => {
+    // input 내부의 정상 동작과, 명시적으로 복사를 허용한 영역(allow-select)은 선택 가능하게 둠
+    const target = e.target;
+    const isTypingInput = target === typeInput || target === nickInput;
+    const isAllowSelect = target.closest && target.closest('.allow-select');
+    if(!isTypingInput && !isAllowSelect){
+      e.preventDefault();
+    }
   });
 
 })();

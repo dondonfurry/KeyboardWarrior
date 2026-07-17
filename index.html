@@ -519,7 +519,7 @@
 
       <div class="code-box">
         <div class="code-label">인증 코드 <span class="code-hint">(결과가 확정되는 순간 함께 고정됩니다)</span></div>
-        <div class="code-value allow-select" id="seedDisplay"></div>
+        <div class="code-value" id="seedDisplay"></div>
         <div class="code-note">이 코드는 check.html에서 해독할 수 있습니다.</div>
       </div>
 
@@ -1141,12 +1141,31 @@
   document.addEventListener('dragstart', (e) => {
     e.preventDefault();
   });
+
+  // 입력창(닉네임/타자 입력)의 정상적인 커서 동작만 허용하고, 그 외 모든 영역은 텍스트 선택 금지
   document.addEventListener('selectstart', (e) => {
-    // input 내부의 정상 동작과, 명시적으로 복사를 허용한 영역(allow-select)은 선택 가능하게 둠
     const target = e.target;
     const isTypingInput = target === typeInput || target === nickInput;
-    const isAllowSelect = target.closest && target.closest('.allow-select');
-    if(!isTypingInput && !isAllowSelect){
+    if(!isTypingInput){
+      e.preventDefault();
+    }
+  });
+
+  // 복사(Ctrl+C/Cmd+C)와 붙여넣기(Ctrl+V/Cmd+V)를 페이지 전역에서 차단
+  // (인증 코드는 "결과값 복사" 버튼을 통해서만 복사 가능)
+  document.addEventListener('copy', (e) => {
+    e.preventDefault();
+  });
+  document.addEventListener('paste', (e) => {
+    e.preventDefault();
+  });
+  document.addEventListener('cut', (e) => {
+    e.preventDefault();
+  });
+  document.addEventListener('keydown', (e) => {
+    const key = e.key.toLowerCase();
+    const isCopyShortcut = (e.ctrlKey || e.metaKey) && (key === 'c' || key === 'x');
+    if(isCopyShortcut){
       e.preventDefault();
     }
   });

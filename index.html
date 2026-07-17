@@ -754,6 +754,7 @@
     totalRequiredJamo = lines.reduce((sum, l) => sum + countLineJamo(l), 0);
 
     typeInput.value = "";
+    typeInput.maxLength = lines[0].length;
     typeInput.disabled = false;
     renderTrack();
     resetLiveStatsDisplay();
@@ -964,6 +965,11 @@
     if(isPasteShortcut){
       e.preventDefault();
     }
+    if(e.key === 'Enter'){
+      e.preventDefault();
+      if(isComposing || e.isComposing) return; // 한글 조합 중 엔터는 무시
+      tryAdvanceLine();
+    }
   });
 
   typeInput.addEventListener('paste', (e) => {
@@ -1003,31 +1009,45 @@
     const line = lines[currentLineIndex];
     let typed = typeInput.value;
 
-    if(typed.length >= line.length){
-      // 이번 줄 완료: 정답 길이까지만 반영하고 다음 줄로 이동
+    if(typed.length > line.length){
+      // 줄 길이를 넘는 입력은 잘라내되, 자동으로 다음 줄로 넘어가지는 않음 (엔터 대기)
       typed = typed.slice(0, line.length);
       typeInput.value = typed;
-
-      let correctJamoInLine = 0;
-      for(let i = 0; i < line.length; i++){
-        if(typed[i] === line[i]) correctJamoInLine += countJamo(line[i]);
-      }
-      totalCorrectJamo += correctJamoInLine;
-      typedForLine[currentLineIndex] = typed;
-
-      if(currentLineIndex >= lines.length - 1){
-        finishTyping();
-        return;
-      }
-
-      currentLineIndex++;
-      typeInput.value = "";
-      renderTrack();
-      updateLiveStats();
-    } else {
-      renderTrack();
-      updateLiveStats();
     }
+
+    renderTrack();
+    updateLiveStats();
+  }
+
+  // 현재 줄을 끝까지 입력한 뒤 엔터를 눌러야 다음 줄로 넘어감
+  function tryAdvanceLine(){
+    if(finished) return;
+
+    const line = lines[currentLineIndex];
+    const typed = typeInput.value;
+
+    if(typed.length < line.length){
+      // 아직 줄을 다 입력하지 않았으면 엔터를 눌러도 무시
+      return;
+    }
+
+    let correctJamoInLine = 0;
+    for(let i = 0; i < line.length; i++){
+      if(typed[i] === line[i]) correctJamoInLine += countJamo(line[i]);
+    }
+    totalCorrectJamo += correctJamoInLine;
+    typedForLine[currentLineIndex] = typed;
+
+    if(currentLineIndex >= lines.length - 1){
+      finishTyping();
+      return;
+    }
+
+    currentLineIndex++;
+    typeInput.value = "";
+    typeInput.maxLength = lines[currentLineIndex].length;
+    renderTrack();
+    updateLiveStats();
   }
 
   function finishTyping(){
@@ -1128,6 +1148,7 @@
     totalCorrectJamo = 0;
 
     typeInput.value = "";
+    typeInput.maxLength = lines[0].length;
     typeInput.disabled = false;
     resultScreen.classList.remove('show');
     mainCard.classList.remove('wide');
@@ -1165,7 +1186,17 @@
   document.addEventListener('keydown', (e) => {
     const key = e.key.toLowerCase();
     const isCopyShortcut = (e.ctrlKey || e.metaKey) && (key === 'c' || key === 'x');
-    if(isCopyShortcut){
+    const isPasteShortcut = (e.ctrlKey || e.metaKey) && key === 'v';
+    const isInsertPaste = e.shiftKey && key === 'insert';
+    if(isCopyShortcut || isPasteShortcut || isInsertPaste){
+      e.preventDefault();
+    }
+  });
+
+  // 일부 브라우저/입력 환경(가상 키보드, 특정 IME 등)은 'paste' 이벤트 없이
+  // beforeinput의 insertFromPaste/insertFromDrop 형태로 붙여넣기를 처리하기도 하므로 함께 차단
+  document.addEventListener('beforeinput', (e) => {
+    if(e.inputType === 'insertFromPaste' || e.inputType === 'insertFromPasteAsQuotation' || e.inputType === 'insertFromDrop'){
       e.preventDefault();
     }
   });
